@@ -2,7 +2,7 @@ Have to be on varda to use /scratch directory
 
 ssh mdb326@varda.cse.lehigh.edu
 
-cd cse376/376Final
+cd cse376/376FinalSmall
 
 module load gcc-15.2.0
 
