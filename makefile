@@ -56,6 +56,10 @@ multi:
 		-Wl,-rpath,/scratch/mdb326/openfhe-development/build/lib \
 		-lOPENFHEcore -lOPENFHEpke -lOPENFHEbinfhe -lpthread
 
+multiun:
+	g++ multiclientun.cpp -o clientun
+	g++ multiserverun.cpp -o multiun -pthread
+
 clean:
 	rm client
 	rm server
@@ -63,3 +67,5 @@ clean:
 	rm serverUnencrypted
 	rm multiclient
 	rm multiserver
+	clientun
+	multiun
