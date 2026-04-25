@@ -178,7 +178,7 @@ int main() {
     CCParams<CryptoContextCKKSRNS> params;
     params.SetMultiplicativeDepth(3);
     params.SetScalingModSize(50);
-    params.SetBatchSize(8);
+    params.SetBatchSize(512); 
 
     cc = GenCryptoContext(params);
     cc->Enable(PKE);

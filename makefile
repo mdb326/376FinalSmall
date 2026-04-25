@@ -67,5 +67,5 @@ clean:
 	rm serverUnencrypted
 	rm multiclient
 	rm multiserver
-	clientun
-	multiun
+	rm clientun
+	rm multiun

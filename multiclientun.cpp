@@ -5,9 +5,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <chrono>
-
-const std::string SERVER_IP = "127.0.0.1";
-const int         PORT      = 4040;
+#include <random>
+#include <map>
 
 bool recv_all(int sock, void* buf, size_t len) {
     size_t got = 0;
@@ -62,48 +61,81 @@ std::vector<double> deserialize_vec(const std::string& blob) {
     return v;
 }
 
-int connect_to_server() {
+std::map<std::string, std::string> parse_args(int argc, char* argv[]) {
+    std::map<std::string, std::string> args;
+    for (int i = 1; i < argc - 1; i += 2)
+        args[argv[i]] = argv[i + 1];
+    return args;
+}
+
+int connect_to_server(const std::string& ip, int port) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port   = htons(PORT);
-    inet_pton(AF_INET, SERVER_IP.c_str(), &addr.sin_addr);
+    addr.sin_port   = htons(port);
+    inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
     if (connect(sock, (sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("connect"); return -1;
     }
     return sock;
 }
 
-int main() {
-    std::vector<double> data = {1.1, 2.2, 3.3, 4.4, 5.0, 6.0, 7.0, 8.0};
+int main(int argc, char* argv[]) {
+    auto args = parse_args(argc, argv);
 
-    auto start = std::chrono::steady_clock::now();
+    int         vec_size   = args.count("--vec_size")   ? std::stoi(args["--vec_size"])   : 8;
+    std::string value_type = args.count("--value_type") ? args["--value_type"]             : "CONST";
+    double      const_val  = args.count("--value")      ? std::stod(args["--value"])       : 1.0;
+    int         seed       = args.count("--seed")       ? std::stoi(args["--seed"])        : 42;
+    std::string mode       = args.count("--mode")       ? args["--mode"]                   : "submit";
+    std::string server_ip  = args.count("--server_ip")  ? args["--server_ip"]              : "127.0.0.1";
+    int         port       = args.count("--port")       ? std::stoi(args["--port"])        : 4040;
+    int         repeat     = args.count("--repeat")     ? std::stoi(args["--repeat"])      : 1;
 
-    // single connection — send data, block until sum arrives
-    int sock = connect_to_server();
-    if (sock < 0) return 1;
-    std::cout << "Connected\n";
+    std::mt19937 gen(seed);
+    std::uniform_real_distribution<> dist(0.0, 10.0);
 
-    send_blob(sock, "SUBMIT");
-    if (!send_blob(sock, serialize_vec(data))) {
-        std::cerr << "Failed to send data\n"; return 1;
+    double total_time = 0;
+
+    for (int r = 0; r < repeat; r++) {
+
+        std::vector<double> data(vec_size);
+        for (int i = 0; i < vec_size; i++)
+            data[i] = (value_type == "RANDOM") ? dist(gen) : const_val;
+
+        std::string payload = serialize_vec(data);
+        size_t payload_size = payload.size();
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        int sock = connect_to_server(server_ip, port);
+        if (sock < 0) { std::cerr << "Connection failed on repeat " << r << "\n"; continue; }
+
+        send_blob(sock, "SUBMIT");
+        if (!send_blob(sock, payload)) {
+            std::cerr << "Failed to send data on repeat " << r << "\n";
+            close(sock); continue;
+        }
+
+        std::string res_blob = recv_blob(sock);
+        close(sock);
+
+        auto end = std::chrono::high_resolution_clock::now();
+
+        if (res_blob.empty()) { std::cerr << "Empty result on repeat " << r << "\n"; continue; }
+
+        double total_ms = std::chrono::duration<double, std::milli>(end - start).count();
+        total_time += total_ms;
+
+        // plaintext has no encrypt step so encrypt_ms=0, ciphertext_bytes=payload size
+        std::cout << "vector_size=" << vec_size
+                  << ",mode=" << mode
+                  << ",encrypt_ms=0"
+                  << ",total_ms=" << total_ms
+                  << ",ciphertext_bytes=" << payload_size
+                  << "\n";
     }
-    std::cout << "Sent — waiting for all clients...\n";
 
-    std::string res_blob = recv_blob(sock);
-    close(sock);
-    if (res_blob.empty()) { std::cerr << "Failed to receive result\n"; return 1; }
-
-    std::vector<double> result = deserialize_vec(res_blob);
-
-    std::cout << "Sum: [";
-    for (size_t i = 0; i < result.size(); i++)
-        std::cout << result[i] << (i + 1 < result.size() ? ", " : "");
-    std::cout << "]\n";
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Elapsed: "
-              << std::chrono::duration<double>(end - start).count() << "s\n";
-
+    std::cout << "avg_total_ms=" << (total_time / repeat) << "\n";
     return 0;
 }
