@@ -4,7 +4,7 @@ OUTPUT_FILE="results3.csv"
 
 echo "vec_size,value_type,encrypt_ms,total_ms,ciphertext_bytes,result" > $OUTPUT_FILE
 
-VEC_SIZES=(8 32)
+VEC_SIZES=(8 32 128 512)
 VALUE_TYPES=("CONST")
 
 REPEAT=1
