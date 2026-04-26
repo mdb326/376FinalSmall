@@ -95,11 +95,11 @@ void handle_client(int sock) {
             stored_vecs.push_back(vec);
             waiting_sockets.push_back(sock);
 
-            std::cout << "Received vec " << stored_vecs.size()
-                      << "/" << REQUIRED_CLIENTS << ": [";
-            for (size_t i = 0; i < vec.size(); i++)
-                std::cout << vec[i] << (i + 1 < vec.size() ? ", " : "");
-            std::cout << "]\n";
+            // std::cout << "Received vec " << stored_vecs.size()
+            //           << "/" << REQUIRED_CLIENTS << ": [";
+            // for (size_t i = 0; i < vec.size(); i++)
+            //     std::cout << vec[i] << (i + 1 < vec.size() ? ", " : "");
+            // std::cout << "]\n";
 
             if ((int)stored_vecs.size() == REQUIRED_CLIENTS) {
                 std::cout << "All clients ready — computing sum...\n";
@@ -111,10 +111,10 @@ void handle_client(int sock) {
                     for (size_t i = 0; i < len; i++)
                         sum[i] += v[i];
 
-                std::cout << "Sum: [";
-                for (size_t i = 0; i < sum.size(); i++)
-                    std::cout << sum[i] << (i + 1 < sum.size() ? ", " : "");
-                std::cout << "]\n";
+                // std::cout << "Sum: [";
+                // for (size_t i = 0; i < sum.size(); i++)
+                //     std::cout << sum[i] << (i + 1 < sum.size() ? ", " : "");
+                // std::cout << "]\n";
 
                 result_bytes = serialize_vec(sum);
                 result_ready = true;

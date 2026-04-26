@@ -1,10 +1,10 @@
 #!/bin/bash
 
-OUTPUT_FILE="results3.csv"
+OUTPUT_FILE="results4.csv"
 
 echo "vec_size,value_type,encrypt_ms,total_ms,ciphertext_bytes,result" > $OUTPUT_FILE
 
-VEC_SIZES=(8 32)
+VEC_SIZES=(8 32 128 512)
 VALUE_TYPES=("CONST")
 
 REPEAT=1
@@ -44,12 +44,12 @@ for vec in "${VEC_SIZES[@]}"; do
       # Format: vector_size=8,mode=submit,encrypt_ms=1.2,total_ms=5.6,ciphertext_bytes=1234,result=[...]
       # Fields after splitting on [=,]:
       #  1=vector_size 2=8 3=mode 4=submit 5=encrypt_ms 6=<val> 7=total_ms 8=<val> 9=ciphertext_bytes 10=<val> 11=result 12=<val>
-      vec_size=$(echo "$LINE"    | awk -F'[=,]' '{print $2}')
-      encrypt_ms=$(echo "$LINE"  | awk -F'[=,]' '{print $6}')
-      total_ms=$(echo "$LINE"    | awk -F'[=,]' '{print $8}')
-      bytes=$(echo "$LINE"       | awk -F'[=,]' '{print $10}')
+      vec_size=$(echo "$LINE" | grep -oP 'vector_size=\K[^,]+')
+      encrypt_ms=$(echo "$LINE" | grep -oP 'encrypt_ms=\K[^,]+')
+      total_ms=$(echo "$LINE" | grep -oP 'total_ms=\K[^,]+')
+      bytes=$(echo "$LINE" | grep -oP 'ciphertext_bytes=\K[^,]+')
       # result=[...] — grab everything after "result="
-      result=$(echo "$LINE"      | grep -oP 'result=\[.*?\]' | cut -d'=' -f2)
+      # result=$(echo "$LINE"      | grep -oP 'result=\[.*?\]' | cut -d'=' -f2)
 
       echo "$vec_size,$valtype,$encrypt_ms,$total_ms,$bytes,$result" >> $OUTPUT_FILE
 
