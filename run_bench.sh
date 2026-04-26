@@ -1,13 +1,13 @@
 #!/bin/bash
 
-OUTPUT_FILE="results2.csv"
+OUTPUT_FILE="results3.csv"
 
 echo "vec_size,value_type,encrypt_ms,total_ms,ciphertext_bytes,result" > $OUTPUT_FILE
 
-VEC_SIZES=(8 32 128 512)
-VALUE_TYPES=("CONST" "RANDOM")
+VEC_SIZES=(8 32)
+VALUE_TYPES=("CONST")
 
-REPEAT=3
+REPEAT=1
 
 for vec in "${VEC_SIZES[@]}"; do
   for valtype in "${VALUE_TYPES[@]}"; do
@@ -20,11 +20,11 @@ for vec in "${VEC_SIZES[@]}"; do
       TMP2=$(mktemp)
       TMP3=$(mktemp)
 
-      ./clientun --vec_size $vec --value_type $valtype --mode submit > $TMP1 2>&1 &
+      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP1 2>&1 &
       PID1=$!
-      ./clientun --vec_size $vec --value_type $valtype --mode submit > $TMP2 2>&1 &
+      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP2 2>&1 &
       PID2=$!
-      ./clientun --vec_size $vec --value_type $valtype --mode submit > $TMP3 2>&1 &
+      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP3 2>&1 &
       PID3=$!
 
       wait $PID1
