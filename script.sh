@@ -1,0 +1,2 @@
+rm bfv
+make bfv

@@ -60,6 +60,9 @@ multiun:
 	g++ multiclientun.cpp -o clientun
 	g++ multiserverun.cpp -o multiun -pthread
 
+bfv:
+	g++ bfv.cpp -o bfv -O3
+
 clean:
 	rm client
 	rm server
