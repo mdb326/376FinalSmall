@@ -63,6 +63,10 @@ multiun:
 bfv:
 	g++ bfv.cpp -o bfv -O3
 
+myMulti:
+	g++ myMulticlient.cpp -o myMulticlient -O3
+	g++ myMultiserver.cpp -o myMultiserver -O3
+
 clean:
 	rm client
 	rm server
