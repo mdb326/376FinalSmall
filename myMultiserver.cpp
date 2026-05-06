@@ -10,7 +10,6 @@
 
 using namespace std;
 
-// ---------------- SOCKET HELPERS ----------------
 bool recv_all(int sock, void* buf, size_t len) {
     size_t got = 0;
     while (got < len) {
@@ -97,7 +96,6 @@ int main() {
     bind(server_fd, (sockaddr*)&addr, sizeof(addr));
     listen(server_fd, 5);
 
-    // 🔥 Store incoming ciphertexts + clients
     vector<Ciphertext> pending_cts;
     vector<int> pending_clients;
 

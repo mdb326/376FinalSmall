@@ -57,26 +57,6 @@ vector<int64_t> poly_scalar(const vector<int64_t> &a, int64_t scalar) {
     return res;
 }
 
-vector<int64_t> poly_mul(const vector<int64_t> &a, const vector<int64_t> &b) {
-    vector<int64_t> res(N, 0);
-
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            int idx = (i + j) % N;
-            int sign = ((i + j) < N) ? 1 : -1;
-
-            res[idx] += sign * a[i] * b[j];
-        }
-    }
-
-    for (int i = 0; i < N; i++) {
-        res[i] %= q;
-        if (res[i] < 0) res[i] += q;
-    }
-
-    return res;
-}
-
 struct PublicKey {
     vector<int64_t> b;
     vector<int64_t> a;
