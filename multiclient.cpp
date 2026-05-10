@@ -20,7 +20,6 @@ CEREAL_REGISTER_DYNAMIC_INIT(key_ser)
 
 using namespace lbcrypto;
 
-// ---------------- ARG PARSER ----------------
 std::map<std::string, std::string> parse_args(int argc, char* argv[]) {
     std::map<std::string, std::string> args;
     for (int i = 1; i < argc - 1; i += 2)
@@ -28,7 +27,6 @@ std::map<std::string, std::string> parse_args(int argc, char* argv[]) {
     return args;
 }
 
-// ---------------- SOCKET HELPERS ----------------
 bool recv_all(int sock, void* buf, size_t len) {
     size_t got = 0;
     while (got < len) {
@@ -76,7 +74,6 @@ int connect_to_server(const std::string& ip, int port) {
     return sock;
 }
 
-// ---------------- MAIN ----------------
 int main(int argc, char* argv[]) {
     auto args = parse_args(argc, argv);
 
@@ -91,7 +88,6 @@ int main(int argc, char* argv[]) {
     std::mt19937 gen(seed);
     std::uniform_int_distribution<int64_t> dist(0, 10);
 
-    // -------- GET CONTEXT --------
     int sock = connect_to_server(server_ip, port);
     send_blob(sock, "GET_CONTEXT");
     std::string cc_bytes = recv_blob(sock);
@@ -109,7 +105,6 @@ int main(int argc, char* argv[]) {
     cc->Enable(KEYSWITCH);
     cc->Enable(LEVELEDSHE);
 
-    // -------- GET PUBKEY --------
     sock = connect_to_server(server_ip, port);
     send_blob(sock, "GET_PUBKEY");
     std::string pk_bytes = recv_blob(sock);
@@ -118,7 +113,6 @@ int main(int argc, char* argv[]) {
     PublicKey<DCRTPoly> pubKey;
     { std::stringstream ss(pk_bytes); Serial::Deserialize(pubKey, ss, SerType::BINARY); }
 
-    // -------- GET EVAL KEY --------
     sock = connect_to_server(server_ip, port);
     send_blob(sock, "GET_EVALKEY");
     std::string ek_bytes = recv_blob(sock);
@@ -126,7 +120,6 @@ int main(int argc, char* argv[]) {
 
     { std::stringstream ss(ek_bytes); cc->DeserializeEvalMultKey(ss, SerType::BINARY); }
 
-    // -------- GET SECRET KEY (DEV ONLY) --------
     sock = connect_to_server(server_ip, port);
     send_blob(sock, "GET_SECRETKEY");
     std::string sk_bytes = recv_blob(sock);
@@ -135,12 +128,10 @@ int main(int argc, char* argv[]) {
     PrivateKey<DCRTPoly> secretKey;
     { std::stringstream ss(sk_bytes); Serial::Deserialize(secretKey, ss, SerType::BINARY); }
 
-    // -------- BENCH LOOP --------
     double total_time = 0;
 
     for (int r = 0; r < repeat; r++) {
 
-        // -------- Generate integer data --------
         std::vector<int64_t> data(vec_size);
         for (int i = 0; i < vec_size; i++) {
             data[i] = (value_type == "RANDOM") ? dist(gen) : const_val;
@@ -148,19 +139,16 @@ int main(int argc, char* argv[]) {
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        // -------- Encrypt --------
         auto enc_start = std::chrono::high_resolution_clock::now();
         Plaintext pt = cc->MakePackedPlaintext(data);
         auto ct      = cc->Encrypt(pubKey, pt);
         auto enc_end = std::chrono::high_resolution_clock::now();
 
-        // -------- Serialize --------
         std::string ct_bytes;
         { std::stringstream ss; Serial::Serialize(ct, ss, SerType::BINARY); ct_bytes = ss.str(); }
 
         size_t ciphertext_size = ct_bytes.size();
 
-        // -------- Submit --------
         sock = connect_to_server(server_ip, port);
         send_blob(sock, "SUBMIT");
         send_blob(sock, ct_bytes);
@@ -173,11 +161,9 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // -------- Deserialize result --------
         Ciphertext<DCRTPoly> resultCt;
         { std::stringstream ss(res_bytes); Serial::Deserialize(resultCt, ss, SerType::BINARY); }
 
-        // -------- Decrypt --------
         Plaintext resultPt;
         cc->Decrypt(secretKey, resultCt, &resultPt);
         resultPt->SetLength(vec_size);
@@ -190,7 +176,6 @@ int main(int argc, char* argv[]) {
         double enc_ms   = std::chrono::duration<double, std::milli>(enc_end - enc_start).count();
         total_time += total_ms;
 
-        // -------- CSV OUTPUT --------
         std::cout << "vector_size=" << vec_size
                   << ",encrypt_ms=" << enc_ms
                   << ",total_ms=" << total_ms
