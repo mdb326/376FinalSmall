@@ -23,11 +23,9 @@ using namespace lbcrypto;
 
 const int REQUIRED_CLIENTS = 3;
 
-// Global crypto state
 CryptoContext<DCRTPoly> cc;
 KeyPair<DCRTPoly> keyPair;
 
-// Session state
 std::mutex session_mtx;
 std::condition_variable session_cv;
 std::vector<Ciphertext<DCRTPoly>> stored_cts;
@@ -35,7 +33,6 @@ std::vector<int> waiting_sockets;
 std::string result_bytes;
 bool result_ready = false;
 
-// ---------------- SOCKET HELPERS ----------------
 
 bool recv_all(int sock, void* buf, size_t len) {
     size_t got = 0;
@@ -72,14 +69,12 @@ std::string recv_blob(int sock) {
     return recv_all(sock, buf.data(), len) ? buf : "";
 }
 
-// ---------------- CLIENT HANDLER ----------------
 
 void handle_client(int sock) {
     std::cout << "Client connected: fd=" << sock << "\n";
 
     std::string mode = recv_blob(sock);
 
-    // ---- Key distribution ----
     if (mode == "GET_PUBKEY") {
         std::stringstream ss;
         Serial::Serialize(keyPair.publicKey, ss, SerType::BINARY);
@@ -112,7 +107,6 @@ void handle_client(int sock) {
         return;
     }
 
-    // ---- SUBMIT ciphertext ----
     if (mode == "SUBMIT") {
         std::string ct_bytes = recv_blob(sock);
         if (ct_bytes.empty()) {
@@ -154,7 +148,6 @@ void handle_client(int sock) {
             }
         }
 
-        // Send result back
         if (!send_blob(sock, result_bytes)) {
             std::cerr << "Failed to send result to fd=" << sock << "\n";
         } else {
@@ -163,7 +156,6 @@ void handle_client(int sock) {
 
         close(sock);
 
-        // ---- Reset session ----
         {
             std::lock_guard<std::mutex> lk(session_mtx);
 
@@ -185,20 +177,17 @@ void handle_client(int sock) {
     close(sock);
 }
 
-// ---------------- MAIN ----------------
 
 int main() {
     const int PORT = 4040;
 
-    // -------- BFV PARAMETERS --------
     CCParams<CryptoContextBFVRNS> params;
 
-    params.SetMultiplicativeDepth(2);   // important even if just adds
-    params.SetPlaintextModulus(65537);  // integer modulus
+    params.SetMultiplicativeDepth(2);  
+    params.SetPlaintextModulus(65537); 
 
-    // Choose size depending on workload
-    params.SetRingDim(8192);            // moderate
-    params.SetBatchSize(4096);          // <= ringDim
+    params.SetRingDim(8192);       
+    params.SetBatchSize(4096);    
 
     cc = GenCryptoContext(params);
 
@@ -206,13 +195,11 @@ int main() {
     cc->Enable(KEYSWITCH);
     cc->Enable(LEVELEDSHE);
 
-    // -------- KEY GENERATION --------
     keyPair = cc->KeyGen();
     cc->EvalMultKeyGen(keyPair.secretKey);
 
     std::cout << "BFV keys generated. Listening on port " << PORT << "\n";
 
-    // -------- SOCKET SETUP --------
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     int opt = 1;
@@ -235,7 +222,6 @@ int main() {
 
     std::cout << "Waiting for " << REQUIRED_CLIENTS << " clients...\n";
 
-    // -------- ACCEPT LOOP --------
     while (true) {
         int sock = accept(server_fd, nullptr, nullptr);
         if (sock < 0) {
