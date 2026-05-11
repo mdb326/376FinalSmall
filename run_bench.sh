@@ -20,11 +20,11 @@ for vec in "${VEC_SIZES[@]}"; do
       TMP2=$(mktemp)
       TMP3=$(mktemp)
 
-      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP1 2>&1 &
+      ./myMulticlient --vec_size $vec --value_type $valtype --mode submit > $TMP1 2>&1 &
       PID1=$!
-      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP2 2>&1 &
+      ./myMulticlient --vec_size $vec --value_type $valtype --mode submit > $TMP2 2>&1 &
       PID2=$!
-      ./multiclient --vec_size $vec --value_type $valtype --mode submit > $TMP3 2>&1 &
+      ./myMulticlient --vec_size $vec --value_type $valtype --mode submit > $TMP3 2>&1 &
       PID3=$!
 
       wait $PID1
