@@ -11,7 +11,7 @@ using namespace std;
 
 const int N = 16;  //must be power of 2
 const int64_t q = 1 << 18;
-const int64_t t = 2; //modulus, must be <<q
+const int64_t t = 256; //modulus, must be <<q
 const int64_t DELTA = q / t;
 
 random_device rd;

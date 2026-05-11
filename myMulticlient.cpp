@@ -126,7 +126,7 @@ int main() {
     SecretKey sk;
     sk.s = deserialize_poly(sk_bytes);
 
-    int message = 3;
+    int message = 30;
 
     auto start = chrono::high_resolution_clock::now();
 
